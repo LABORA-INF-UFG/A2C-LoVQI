@@ -10,11 +10,11 @@ This repository contains the code for the paper **"Soluções baseadas em aprend
 
 ### 1.1 Get NS-3
 
-NS-3 is a free open source project aiming to build a discrete-event
+NS-3 is a free, open-source project aiming to build a discrete-event
 network simulator targeted for simulation research and education.
 Get binaries from the [official website](https://www.nsnam.org/releases/ns-3-41/).
 
-Download a source archive, of |ns3| to a location on your file
+Download a source archive of |ns3| to a location on your file
 system (usually somewhere under your home directory).
 
    ```bash
@@ -31,7 +31,7 @@ Tar the file:
 
 #### Pre-requisites
 
-Make sure that your system has these pre-requisites. If not, install them using the following commands:
+Make sure that your system has these prerequisites. If not, install them using the following commands:
 
    ```bash
         # update the system
@@ -41,7 +41,7 @@ Make sure that your system has these pre-requisites. If not, install them using 
         # for the minimal requirements for Python visualizer and bindings
         python3 -m pip install --user cppyy
         sudo apt install gir1.2-goocanvas-2.0 python3-gi python3-gi-cairo python3-pygraphviz gir1.2-gtk-3.0 ipython3 
-        # additional minimal requirements for Python (development): 
+        # Additional minimal requirements for Python (development): 
         sudo apt install python3-setuptools 
         # Netanim animator:
         sudo apt install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
@@ -72,7 +72,7 @@ Go to the directory where you extracted the tarball and run the following comman
 
 #### 1.3.1 Install the SIGNETLab/LoRaWAN module
 
-Clone the LoRaWAN module, on the ns-3.41/src directory:
+Clone the LoRaWAN module on the ns-3.41/src directory:
 
    ```bash
        git clone https://github.com/signetlabdei/lorawan <local-path>/ns-3.41/src/lorawan
@@ -116,9 +116,9 @@ Clone the LoRaWAN module, on the ns-3.41/src directory:
 
 ##### 1.3.3.2 Clone the ns3-gym module, on the ns-3.41/contrib directory:
 
-OpenAI Gym is a toolkit for reinforcement learning (RL), and 
+OpenAI Gym is a toolkit for reinforcement learning (RL) and 
 ns3-gym is a framework that integrates both OpenAI Gym and
-ns-3 in order to encourage usage of RL in networking research.
+ns-3 to encourage the usage of RL in networking research.
 
 ```bash
    git clone https://github.com/tkn-tub/ns3-gym.git <local-path>/ns-3.41/contrib/opengym
@@ -135,7 +135,7 @@ ns-3 in order to encourage usage of RL in networking research.
     ./ns3 build
 ```
 ### 1.5 Install the ns3-gym module
-* Opengym Protocol Buffer messages (C++ and Python) are build during configure.
+* Opengym Protocol Buffer messages (C++ and Python) are built during configuration.
 #### 1.5.1 Install the ns3-gym module
 ```bash
     cd <local-path>/ns-3.41/contrib/opengym
@@ -153,14 +153,20 @@ Goes Get the code from the repository:
 Enjoy it!
 
 ## 2. Run the code
-
+Note that the Python code runs an agent and automatically starts the  ns-3 simulation. 
 ```bash
     cd <local-path>/ns-3.41/scratch/A2C-LoVQI
-    python3 main.py
+    ./waf --run "a2c-agent"
+    ./waf --run "dqn-agent"
+```bash
+    cd <local-path>/ns-3.41/scratch/A2C-LoVQI
+    python3 dqn_agent.py
+    python3 a2c_agent.py
 ```
 
 ## 3. Cite this work
 ```bibtex
-Still not available. 
+Still unavailable. 
 ```
+
 
