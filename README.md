@@ -150,19 +150,15 @@ Goes Get the code from the repository:
     cd <local-path>/ns-3.41/scratch
     git clone git@github.com:rogerio-silva/A2C-LoVQI.git
 ```
-Enjoy it!
 
 ## 2. Run the code
 Note that the Python code runs an agent and automatically starts the  ns-3 simulation. 
 ```bash
     cd <local-path>/ns-3.41/scratch/A2C-LoVQI
-    ./waf --run "a2c-agent"
-    ./waf --run "dqn-agent"
-```bash
-    cd <local-path>/ns-3.41/scratch/A2C-LoVQI
     python3 dqn_agent.py
     python3 a2c_agent.py
 ```
+Enjoy it!
 
 ## 3. Cite this work
 ```bibtex
