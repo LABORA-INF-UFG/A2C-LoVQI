@@ -162,7 +162,15 @@ Enjoy it!
 
 ## 3. Cite this work
 ```bibtex
-Still unavailable. 
+    @InProceedings{silvaRS2024, 
+        author = {Silva, R. S. and Oliveira, R. R. and Carvalho, L. T. S. and Freitas, L. A. and Oliveira-Jr, A. C. and Cardoso, K. V. and Reis, C. B. and Xavier, P. S.},
+        booktitle = {Anais do XLII Simpósio Brasileiro de Telecomunicações e Processamento de Sinais (SBrT)},
+        title = {{Soluções baseadas em Aprendizado por reforço profundo para implantar VANTs como gateways LoRaWAN com foco na qualidade de serviço IOT}},
+        month = {November},
+        year = {2024},
+        pages = {1--6},
+        doi= {https://doi.org/10.14209/sbrt.2024.1571036460}
+    }
 ```
 
 
