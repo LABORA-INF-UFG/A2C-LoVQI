@@ -18,9 +18,8 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 from ns3gym import ns3env
-from colorama import Fore, Back, Style
 
-from QLearning import QLearning
+from ql.QLearning import QLearning
 
 # S.O. parameters
 parser = argparse.ArgumentParser()

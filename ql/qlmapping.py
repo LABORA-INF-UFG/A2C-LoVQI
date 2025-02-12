@@ -3,13 +3,13 @@ import numpy as np
 
 
 class QLMapping:
-    def __init__(self, ns3_env, dim_grid=10, n_actions=5, action_space=None, n_agents=2, initial_state=0,
+    def __init__(self, ns3_env, dim_grid=10, step_size=2000, n_agents=2, n_actions=5, action_space=None,  initial_state=0,
                  n_states=0, state_positions=None, alpha=0.2, gamma=0.9, q_table=None,
                  epsilon=1, epsilon_min=0.5, epsilon_decay=0.999):
         self.qtable = None  # Q-table
         self.ns3_env = ns3_env  # NS-3 environment
         self.dim_grid = dim_grid  # area side, means the grid is 10x10
-        self.step_size = 1000  # step size for each movement (UAVs move 1000 meters each time)
+        self.step_size = step_size  # step size for each movement (UAVs move 1000 meters each time)
         self.n_agents = n_agents  # number of agents (UAVs) in the grid
         self.n_actions = n_actions  # number of possible actions of each agent
         self.action_space = action_space  # space of all possible actions
@@ -82,7 +82,7 @@ class QLMapping:
         # Transform coordinates into state_positions
         # Separate coordinates into (x,y)-tuples
         # ex: [0, 1, 2, 3, 4, 5, 6, 7, 8] = > [(0, 1), (3, 4), (6, 7)]
-        coord_pos = [((c_pos[i] - 500) // 1000, (c_pos[i + 1] - 500) // 1000) for i in range(0, len(c_pos), 3)]
+        coord_pos = [((c_pos[i]) // self.step_size, (c_pos[i + 1]) // self.step_size) for i in range(0, len(c_pos), 3)]
         # Transform drones coordinates into state coordinates
         state_pos = [x * self.dim_grid + y for x, y in coord_pos]
 
@@ -95,7 +95,7 @@ class QLMapping:
     def coordinates_from_state(self, state):
         state_pos = self.state_positions[state]
         # Transform state coordinates into drones coordinates
-        coord_pos = [(x // self.dim_grid * 1000 + 500, x % self.dim_grid * 1000 + 500, 45) for x in state_pos]
+        coord_pos = [(x // self.dim_grid * self.step_size, x % self.dim_grid * self.step_size, 45) for x in state_pos]
         # Transform state_positions into coordinates
         c_pos = [x for tup in coord_pos for x in tup]
         return c_pos
