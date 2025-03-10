@@ -5,39 +5,52 @@ SZ=20000 # Tamanho fixo
 
 # Função para exibir o uso correto do script
 usage() {
-  echo "Uso: $0 -n <n> -d <DV> -g <GW> -e <EP> -s <ST>"
-  echo "  -n <n>    Valor para 'n' (ex: 8)"
-  echo "  -d <DV>   Valor para 'DV' (ex: 50)"
-  echo "  -g <GW>   Valor para 'GW' (ex: 6)"
-  echo "  -e <EP>   Valor para 'EP' (ex: 100)"
-  echo "  -s <ST>   Valor para 'ST' (ex: 100)"
-  exit 1
+ echo "Uso: $0 -n <n> -d <DV> -g <GW> -e <EP> -p <ST> -s <SD> [-v]"
+ echo "  -n <n>    Valor para 'Nº CANDIDATE POSITIONS' (ex: 8 means 8x8-64)"
+ echo "  -d <DV>   Valor para 'DEVICES' (ex: 50)"
+ echo "  -g <GW>   Valor para 'GATEWAYS' (ex: 6)"
+ echo "  -e <EP>   Valor para 'EPISODE' (ex: 100)"
+ echo "  -p <ST>   Valor para 'STEP' (ex: 100)"
+ echo "  -s <SD>   Valor para 'SEED' (ex: 1)"
+ echo "  -v        Habilita modo VERBOSE (opcional)"
+ exit 1
 }
 
+# Inicializa VERBOSE como falso
+VERBOSE=0
+
 # Processa os argumentos de entrada
-while getopts ":n:d:g:e:s:" opt; do
-  case $opt in
-    n) VP=${OPTARG} ;;     # Valor para n
-    d) DV=${OPTARG} ;;    # Valor para DV
-    g) GW=${OPTARG} ;;    # Valor para GW
-    e) EP=${OPTARG} ;;    # Valor para EP
-    s) ST=${OPTARG} ;;    # Valor para ST
-    *) usage ;;           # Exibe uso correto se algo inválido for passado
-  esac
+while getopts ":n:d:g:e:p:s:v" opt; do
+ case $opt in
+   n) VP=${OPTARG} ;;     # Valor para n
+   d) DV=${OPTARG} ;;    # Valor para DV
+   g) GW=${OPTARG} ;;    # Valor para GW
+   e) EP=${OPTARG} ;;    # Valor para EP
+   p) ST=${OPTARG} ;;    # Valor para ST
+   s) SD=${OPTARG} ;;    # Valor para ST
+   v) VERBOSE=1 ;;       # Ativa o modo VERBOSE
+   *) usage ;;           # Exibe uso correto se algo inválido for passado
+ esac
 done
-echo $0 $1
-# Verifica se todos os parâmetros foram fornecidos
-if [ -z "$VP" ] || [ -z "$DV" ] || [ -z "$GW" ] || [ -z "$EP" ] || [ -z "$ST" ]; then
-  usage
+
+# Verifica se todos os parâmetros obrigatórios foram fornecidos
+if [ -z "$VP" ] || [ -z "$DV" ] || [ -z "$GW" ] || [ -z "$EP" ] || [ -z "$ST" ] || [ -z "$SD" ]; then
+ usage
 fi
+
+# Calcula VP_SQUARE
 VP_SQUARE=$(($VP * $VP))
 
-# Executa o agente DQN
-echo "Executando: python3 A2C_Ns3Simulation.py --v 1 --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --ep $EP --st $ST --ss 1 --so 1"
-python3 A2C_Ns3Simulation.py --v 1 --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --ep $EP --st $ST --ss 1 --so 1
+# Função para exibir mensagens quando VERBOSE está habilitado
+log_verbose() {
+ if [ "$VERBOSE" = true ]; then
+   echo "[VERBOSE] $1"
+ fi
+}
 
-# Gera os gráficos usando os mesmos parâmetros
-echo "Gerando gráfico: python3 A2C_grafs.py --v $VP_SQUARE --g $GW --d $DV"
-python3 A2C_grafs.py --v $VP_SQUARE --g $GW --d $DV
+# Loop para executar com seed de 1 a 20
+log_verbose "Executando com SEED=$SD: python3 A2C_ns3Simulation.py --v $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --ep $EP --st $ST --sd $SD --so 1 --ss 1"
+python3 A2C_ns3Simulation.py --v $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --ep $EP --st $ST --sd $SD --so 1 --ss 1
+
 
 echo "Execução concluída."

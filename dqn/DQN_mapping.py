@@ -12,7 +12,7 @@ class DQNMapping:
                  replay_buffer_size=None, batch_size=24, device='cpu'):
 
         # Configuração do dispositivo para GPU ou CPU
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device
 
         # Parâmetros do ambiente
         self.ns3_env = ns3_env
@@ -54,11 +54,11 @@ class DQNMapping:
         input_dim = int(self.state_size)
         # Garante que input_dim corresponde ao grid achatado
         model = nn.Sequential(
-            nn.Linear(input_dim, 128),
+            nn.Linear(input_dim, 256),
             nn.ReLU(),
-            nn.Linear(128, 64),
+            nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(64, self.n_actions)
+            nn.Linear(256, self.n_actions)
         ).to(self.device)
         return model
 
@@ -268,3 +268,16 @@ class ReplayBuffer:
     def update_priorities(self, indices, errors):
         for idx, error in zip(indices, errors):
             self.priorities[idx] = error ** self.alpha
+
+
+def save_checkpoint(policy_model, target_model, optimizer, filename):
+    """Salva o estado atual do modelo e otimizadores."""
+    checkpoint = {
+        'policy_state_dict': policy_model.state_dict(),
+        'target_state_dict': target_model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+    }
+    torch.save(checkpoint, filename)
+    print(f"Checkpoint salvo em {filename}")
+
+

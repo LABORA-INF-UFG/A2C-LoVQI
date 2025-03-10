@@ -4,26 +4,20 @@ import os
 import time
 
 import numpy as np
+import pandas as pd
 import torch
-from codetiming import Timer
 from numpy import random
-from dqnmapping import DQNMapping
+
+from DQN_mapping import DQNMapping, load_checkpoint, save_checkpoint, save_simulation_results
 from ns3gym import ns3env
 
-execution_time = Timer(text="Execution time: {0:.2f} seconds")
-execution_time.start()
-if not torch.cuda.is_available():
-    raise Exception('CUDA is not available. Aborting.')
+device = torch.device("cpu")
+if torch.cuda.is_available():
+    print('CUDA is available. Using GPU.')
+    # Configuração do dispositivo para GPU ou CPU
+    device = torch.device("cuda")
 else:
-    print("CUDA available.")
-
-path_files = "/home/rogerio/git/ns-allinone-3.42/ns-3.42/scratch/ql-uav-deployment/data/ml/treinamento/"
-CHECKPOINT_DIR = "/home/rogerio/git/ns-allinone-3.42/ns-3.42/scratch/ql-uav-deployment/data/ml/treinamento/checkpoints/"
-
-# Configuração do dispositivo para GPU ou CPU
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# device = 'cpu'
-print(f"Executando no dispositivo: {device}")
+    print('CUDA is not available. Using CPU.')
 
 # Create a parser
 parser = argparse.ArgumentParser(description='DQN for n UAVs')
@@ -36,7 +30,8 @@ parser.add_argument('--gr', type=int, help='Grid dimension (gr x gr)')
 parser.add_argument('--sz', type=int, help='Area side size')
 parser.add_argument('--dv', type=int, help='Number of Devices')
 parser.add_argument('--gw', type=int, help='Number of Gateways')
-parser.add_argument('--ep', type=int, help='Number of episodes')
+parser.add_argument('--epi', type=int, help='Number of initial episode')
+parser.add_argument('--epf', type=int, help='Number of final episode')
 parser.add_argument('--st', type=int, help='Number of steps')
 parser.add_argument('--ss', type=int, help='Start NS-3 Simulation')
 parser.add_argument('--so', type=int, help='Start Optimal')
@@ -45,7 +40,6 @@ parser.add_argument('--out_term', type=int, help='Output type [file or screen] f
 parser.add_argument('--progress', type=int, help='Show progress bar')
 args = parser.parse_args()
 
-# Configurações principais extraídas do QL.py
 port = args.pr
 dim_grid = args.gr  # Tamanho da grade
 area_side = args.sz  # Lado da área de simulação
@@ -59,22 +53,32 @@ plot_data = True  # Gerar gráficos
 start_sim = args.ss
 start_optimal = args.so
 debug = 0 if start_sim == 1 else 1  # Iniciar simulação em condições ótimas
-episodes = args.ep  # Número de episódios
+# episodes = args.ep  # Número de episódios
 steps_per_episode = args.st  # Passos por episódio
 virtual_positions = dim_grid * dim_grid
 step_size = area_side / dim_grid  # Tamanho do passo
 print_movements = True
 sim_seed = random.randint(1, 20)  # Semente de simulação
-run_seed = episodes - 1
+initial_episode = args.epi
+final_episode = args.epf
+# run_seed = final_episode-initial_episode
 simArgs = {"--nDevices": nDevices,
            "--nGateways": nGateways,
            "--vgym": 1,
            "--verbose": 0,
-           "--simSeed": sim_seed,
-           "--runSeed": run_seed,
            "--virtualPositions": virtual_positions,
            "--startOptimal": start_optimal,
            "--areaSide": area_side}
+
+path_files = "/home/rogerio/git/ns-allinone-3.42/ns-3.42/scratch/ql-uav-deployment/data/ml/treinamento/"
+CHECKPOINT_DIR = "/home/rogerio/git/ns-allinone-3.42/ns-3.42/scratch/ql-uav-deployment/data/ml/treinamento/checkpoints/"
+checkpoint_filename = f"{CHECKPOINT_DIR}DQN_policy_chkpt_{virtual_positions}V_{nGateways}G_{nDevices}DD.pth"
+results_file_name = f"{path_files}DQN_results_{virtual_positions}V_{nGateways}G_{nDevices}DD.dat"
+best_positions_file_name = f"{path_files}DQN_best_positions_{virtual_positions}V_{nGateways}G_{nDevices}DD.dat"
+movements_file_name = f"{path_files}DQN_movements_{virtual_positions}V_{nGateways}G_{nDevices}DD.dat"
+
+if not os.path.exists(CHECKPOINT_DIR):
+    os.makedirs(CHECKPOINT_DIR)
 
 movements = ['up', 'right', 'down', 'left', 'stay']
 # Inicialização do agente DQN
@@ -88,16 +92,17 @@ agent = DQNMapping(
     action_space=action_space,  # Espaço de ações possíveis
     dim_grid=dim_grid,  # Configuração do tamanho da grade
     n_vants=nGateways,
-    state_size=state_size
+    state_size=state_size,
+    device=device
 )
 
 # Configuração de parâmetros do DQN
 agent.epsilon = 1.0  # Exploração inicial
-agent.epsilon_min = 0.1  # Valor mínimo do epsilon
-agent.epsilon_decay = 0.995  # Decaimento do epsilon
-agent.gamma = 0.995  # Fator de desconto
-agent.batch_size = 24  # Tamanho do lote para aprendizado
-agent.learning_rate = 1e-3  # Taxa de aprendizado
+agent.epsilon_min = 0.05  # Valor mínimo do epsilon
+agent.epsilon_decay = 0.9975  # Decaimento do epsilon
+agent.gamma = 0.999  # Fator de desconto
+agent.batch_size = 64  # Tamanho do lote para aprendizado
+agent.learning_rate = 2e-4  # Taxa de aprendizado
 
 # Certifique-se de que `agent` utiliza o dispositivo correto (GPU ou CPU)
 agent.policy_network.to(device)
@@ -114,12 +119,8 @@ ns3_env = ns3env.Ns3Env(
 )
 
 # Carregar os pesos salvos se existirem os arquivos
-if os.path.exists(f"{path_files}dqn_policy_net_{virtual_positions}V_{nGateways}G_{nDevices}d.pt"):
-    agent.policy_network.load_state_dict(
-        torch.load(f"{path_files}dqn_policy_net_{virtual_positions}V_{nGateways}G_{nDevices}d.pt"))
-if os.path.exists(f"{path_files}dqn_target_net_{virtual_positions}V_{nGateways}G_{nDevices}d.pt"):
-    agent.target_network.load_state_dict(
-        torch.load(f"{path_files}dqn_target_net_{virtual_positions}V_{nGateways}G_{nDevices}d.pt"))
+if os.path.exists(checkpoint_filename):
+    load_checkpoint(agent.policy_network, agent.target_network, agent.optimizer, checkpoint_filename)
 
 # Lista para registrar os dados de cada episódio
 results = [[], [], [], []]
@@ -132,7 +133,19 @@ episode_times = []
 
 k = 0
 qualified_mean_reward = 0
-for episode in range(episodes):
+
+# Se foi interrompido, carrega o último episódio executado
+# if os.path.exists(results_file_name):
+#     data = pd.read_csv(results_file_name)
+#     initial_episode = data['episodio'].max() + 1
+#     final_episode = episodes + initial_episode
+# else:
+# Primeira execução
+allowed_checkpoint = int(0.2 * final_episode - initial_episode + 1)
+allowed_checkpoint = 10 if allowed_checkpoint < 10 else allowed_checkpoint
+best_reward = -np.inf
+
+for episode in range(initial_episode, final_episode + 1):
     start_time = time.time()  # Início da medição do tempo
     episode_movements = []
 
@@ -145,17 +158,25 @@ for episode in range(episodes):
     initial_episode_reward = reward
     step_rewards = []
     step_losses = []
+    step_q_rewards = []
     for step in range(steps_per_episode):
         # O agente decide qual ação executar
         action = agent.get_action(state)
-        # Pegar o indice da ação
+        # Pegar o índice da ação
         iAction = action_space.index(action)
-        # Aplica a ação no ambiente e obtém o próximo estado, recompensa e se o episódio acabou
+        # Aplica a ação no ambiente e obtém o próximo estado, recompensa, informações e se o episódio acabou
         next_state, reward, done, info = ns3_env.step(iAction)
         # Armazena essa transição na memória de replay
         agent.remember(state, action, reward, next_state, done)
         step_rewards.append(reward)
-
+        if reward > best_reward:
+            best_reward = reward
+            best_positions = next_state
+            best_step = step
+            best_episode = episode
+            best_info = info
+        if info and "Collision" not in info and "OutOfArea" not in info:
+            step_q_rewards.append(reward)
         loss = agent.get_loss(next_state, reward, action)
         step_losses.append(loss)
 
@@ -169,7 +190,14 @@ for episode in range(episodes):
 
         state = next_state  # Move para o próximo estado
         if verbose:
-            print(f'Step: {step} Rw:{reward} {"I:" + info}')
+            print(f'Episode: {episode}/{final_episode} Step: {step} Rw:{reward} {"I:" + info}')
+        else:
+            # a cada step imprimir \, |, /, -, \, |, /, - no mesmo lugar
+            print('\r' + f'Episode: {episode + 1 if step != 0 else episode} / {final_episode}'
+                         f' [{int((step / steps_per_episode) * 100) if step != 0 else 100}]%'
+                         f' Time elapsed: {time.time() - start_time:.2f}s',
+                  flush=True,
+                  end='' if step != 0 else '\n')
         if done:  # Se o episódio terminou
             break  # Sai do loop interno
 
@@ -180,13 +208,13 @@ for episode in range(episodes):
     stop_time = time.time()
     # Verifica se há valores em results para calcular médias seguras
     previous_mean_reward = results[1][-1] if len(results[1]) > 0 else 0
-    previous_mean_loss_episode = results[2][-1] if len(results[2]) > 0 else 0
+    previous_quali_mean_reward = results[2][-1] if len(results[2]) > 0 else 0
+    previous_mean_loss_episode = results[3][-1] if len(results[3]) > 0 else 0
 
     # Calcula as médias acumuladas
     mean_reward = ((k + 1) * previous_mean_reward + np.mean(step_rewards)) / (k + 2)
     if info and "Collision" not in info and "OutOfArea" not in info:
-        qualified_mean_reward = ((k + 1) * previous_mean_reward + np.mean(step_rewards)) / (k + 2)
-
+        qualified_mean_reward = ((k + 1) * previous_quali_mean_reward + np.mean(step_q_rewards)) / (k + 2)
     mean_loss_episode = ((k + 1) * previous_mean_loss_episode + np.mean(step_losses)) / (k + 2)
 
     # Armazena os resultados no formato adequado
@@ -199,56 +227,66 @@ for episode in range(episodes):
     if print_movements:
         episodes_movements[episode] = episode_movements
 
-    improv = '+' if final_episode_reward > initial_episode_reward == True else '-'
-    if improv == '+':
-        improvements.append(1)
-    else:
-        improvements.append(0)
+    improvements.append(1 if ((final_episode_reward > initial_episode_reward) == True) else 0)
 
-    print(f'Episode {episode + 1}/{episodes} {improv}'
-          f' Time elapsed: {stop_time - start_time}'
-          f' Mean reward: {mean_reward}'
-          f' Qualified Mean reward: {qualified_mean_reward}'
-          f' Mean Loss: {mean_loss_episode}\n')
+    time_elapsed = stop_time - start_time
+    if verbose:
+        print(f'Episode {episode}/{final_episode} '
+              f'[{'+' if ((final_episode_reward > initial_episode_reward) == True) else '-'}'
+              f'] Time elapsed: {time_elapsed}'
+              f' Mean reward: {mean_reward:.4f}'
+              f' Qualified Mean reward: {qualified_mean_reward:.4f}'
+              f' Mean Loss: {mean_loss_episode:.4f}\n')
 
     # Verifica se é hora de salvar o modelo
-    if episode % (episode // 5) == 0 or episode == episodes:
-        checkpoint_name_policy = f"DQN_policy_chkpt_{episode}_{virtual_positions}V_{nGateways}G_{nDevices}d.pth"
-        checkpoint_name_target = f"DQN_target_chkpt_{episode}{virtual_positions}V_{nGateways}G_{nDevices}d.pth"
+    if episode % allowed_checkpoint == 0:
+        save_checkpoint(
+            agent.policy_network,
+            agent.target_network,
+            agent.optimizer,
+            f"{checkpoint_filename}")
+        save_simulation_results(
+            results_file_name=results_file_name,
+            movements_file_name=movements_file_name,
+            best_positions_file_name=best_positions_file_name,
+            results=results,
+            initial_episode=initial_episode,
+            episodes_movements=episodes_movements,
+            best_episode=best_episode,
+            best_step=best_step,
+            best_reward=best_reward,
+            best_positions=best_positions,
+            best_info=best_info,
+            print_movements=print_movements,
+            file_mode="w"
+        )
 
-        if not os.path.exists(CHECKPOINT_DIR):
-            os.makedirs(CHECKPOINT_DIR)
+if verbose:
+    print(f'For {final_episode - initial_episode + 1} episodes, there was {sum(improvements)} '
+          f'improvements ({round(sum(improvements) * 100 / final_episode - initial_episode + 1, 2)}%) '
+          f'and {final_episode - initial_episode + 1 - sum(improvements)} '
+          f'worse results ({round((final_episode - initial_episode + 1 - sum(improvements)) * 100 / final_episode - initial_episode + 1, 2)}%)')
 
-        policy_path = os.path.join(CHECKPOINT_DIR, checkpoint_name_policy)
-        target_path = os.path.join(CHECKPOINT_DIR, checkpoint_name_target)
+save_checkpoint(
+    agent.policy_network,
+    agent.target_network,
+    agent.optimizer,
+    f"{checkpoint_filename}")
+save_simulation_results(
+    results_file_name=results_file_name,
+    movements_file_name=movements_file_name,
+    best_positions_file_name=best_positions_file_name,
+    results=results,
+    initial_episode=initial_episode,
+    episodes_movements=episodes_movements,
+    best_episode=best_episode,
+    best_step=best_step,
+    best_reward=best_reward,
+    best_positions=best_positions,
+    best_info=best_info,
+    print_movements=print_movements,
+    file_mode="a"
+)
 
-        torch.save(agent.policy_network.state_dict(), policy_path)
-        torch.save(agent.target_network.state_dict(), target_path)
-
-print(
-    f'For {episodes} episodes, there was {sum(improvements)} improvements ({round(sum(improvements) * 100 / episodes, 2)}%) and {episodes - sum(improvements)} worse results ({round((episodes - sum(improvements)) * 100 / episodes, 2)}%)')
-
-# Tempos de execução por episódio
-file_name = f"{path_files}DQN_results_{virtual_positions}V_{nGateways}G_{nDevices}D.dat"
-with open(file_name, "w") as file:
-    file.write("episodio,tempo,reward, qualified_reward,loss\n")
-    for idx, (time_elapsed, reward, qualified_mean_reward, loss) in enumerate(
-            zip(results[0], results[1], results[2], results[3])):
-        file.write(f"{idx + 1},{time_elapsed:.4f},{reward:.4f}, {qualified_mean_reward:.4f},{loss:.4f}\n")
-
-if print_movements:
-    file_name = f"{path_files}DQN_episodes_movements_{virtual_positions}V_{nGateways}G_{nDevices}D.dat"
-    with open(file_name, "w") as file:
-        file.write("episodio,step,state,next_state,reward,info,action,step_size\n")
-        for idx, (episode, episode_movements) in enumerate(episodes_movements.items()):
-            for step, state, next_state, reward, info, action, step_size in episode_movements:
-                file.write(f"{idx + 1},{step},{state},{next_state},{reward},{info},{action},{step_size}\n")
-
-# Salvar modelo treinado e finalizar
-torch.save(agent.policy_network.state_dict(),
-           f"{path_files}dqn_policy_net_{virtual_positions}V_{nGateways}G_{nDevices}d.pt")
-torch.save(agent.target_network.state_dict(),
-           f"{path_files}dqn_target_net_{virtual_positions}V_{nGateways}G_{nDevices}d.pt")
-execution_time.stop()
 print("Treinamento concluído!")
 ns3_env.close()

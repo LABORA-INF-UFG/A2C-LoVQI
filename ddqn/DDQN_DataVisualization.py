@@ -25,38 +25,49 @@ output_file = os.path.join(output_dir, f"graf_DQN_results_{vp}V_{gp}G_{dp}D.png"
 # O arquivo possui o seguinte cabeçalho: "episodio,tempo_execucao,sum_loss,avg_loss,sum_reward,avg_reward"
 data = pd.read_csv(input_file)
 
+# Definir o tamanho da janela para a média móvel
+rolling_window = 10  # Altere o valor da janela, se necessário
+
+# Aplicar a média móvel nas colunas desejadas
+data['tempo_execucao_ma'] = data['tempo'].rolling(window=rolling_window).mean()
+data['sum_loss_ma'] = data['loss'].rolling(window=rolling_window).mean()
+data['sum_reward_ma'] = data['reward'].rolling(window=rolling_window).mean()
+
 # Criação de uma figura com 3 subgráficos lado a lado
 fig, axs = plt.subplots(1, 3, figsize=(15, 5))
 
-# 1. Tempo de execução por episódio
-axs[0].plot(data["episodio"], data["tempo_execucao"], marker='o', linestyle='-', color='b', label='Tempo de Execução')
-axs[0].set_title("Tempo de Execução por Episódio")
+# 1. Tempo de execução por episódio (média móvel e escala log no eixo Y)
+axs[0].plot(data["episodio"], data["tempo_execucao_ma"], marker='o', linestyle='-', color='b',
+            label='Média Movel - Tempo Execução')
+axs[0].set_title("Tempo de Execução por Episódio (Média Móvel)")
 axs[0].set_xlabel("Episódio")
 axs[0].set_ylabel("Tempo de Execução")
+axs[0].set_yscale('log')  # Escala logarítmica no eixo Y
 axs[0].legend()
 axs[0].grid()
 
-# 2. Loss acumulada por episódio
-axs[1].plot(data["episodio"], data["sum_loss"], marker='o', linestyle='-', color='r', label='Loss Acumulada')
-axs[1].set_title("Loss Acumulada por Episódio")
+# 2. Loss acumulada por episódio (média móvel e escala log no eixo Y)
+axs[1].plot(data["episodio"], data["sum_loss_ma"], marker='o', linestyle='-', color='r',
+            label='Média Móvel - Loss Acumulada')
+axs[1].set_title("Loss Acumulada por Episódio (Média Móvel)")
 axs[1].set_xlabel("Episódio")
 axs[1].set_ylabel("Loss Acumulada")
+axs[1].set_yscale('log')  # Escala logarítmica no eixo Y
 axs[1].legend()
 axs[1].grid()
 
-# 3. Recompensa acumulada por episódio
-axs[2].plot(data["episodio"], data["sum_reward"], marker='o', linestyle='-', color='g', label='Recompensa Acumulada')
-axs[2].set_title("Recompensa Acumulada por Episódio")
+# 3. Recompensa acumulada por episódio (média móvel e escala log no eixo Y)
+axs[2].plot(data["episodio"], data["sum_reward_ma"], marker='o', linestyle='-', color='g',
+            label='Média Móvel - Recompensa Acumulada')
+axs[2].set_title("Recompensa Acumulada por Episódio (Média Móvel)")
 axs[2].set_xlabel("Episódio")
 axs[2].set_ylabel("Recompensa Acumulada")
+axs[2].set_yscale('log')  # Escala logarítmica no eixo Y
 axs[2].legend()
 axs[2].grid()
 
 # Ajusta o layout para evitar sobreposição
 plt.tight_layout()
-
-# Mostra o gráfico
-# plt.show()
 
 # Salva o gráfico como imagem
 fig.savefig(output_file)

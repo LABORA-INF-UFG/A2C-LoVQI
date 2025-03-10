@@ -5,7 +5,7 @@ import pandas as pd
 from matplotlib.animation import FuncAnimation
 import math
 
-parser = argparse.ArgumentParser(description='MOVEMENTS of DQN for n UAVs')
+parser = argparse.ArgumentParser(description='MOVEMENTS of RL AGENTS for n UAVs')
 parser.add_argument('--v', type=int, help='Number of Virtual Positions')
 parser.add_argument('--g', type=int, help='Number of Gateways')
 parser.add_argument('--d', type=int, help='Number of Devices')
@@ -21,10 +21,10 @@ log = args.l
 
 # Parameters of the area
 AREA_LIMIT = [0, 0, 20000, 20000]
-FILE_PATH = '/home/rogerio/git/ns-allinone-3.42/ns-3.42/scratch/ql-uav-deployment/data/ml/treinamento'
+FILE_PATH = '/home/rogerio/git/ns-allinone-3.42/ns-3.42/scratch/ql-uav-deployment/data/ml/treinamento/bkp/a2c_64V'
 GIF_PATH = '/home/rogerio/git/IoT-J2024/plots/img'
 DEVICES_PATH = '/home/rogerio/git/ns-allinone-3.42/ns-3.42/scratch/ql-uav-deployment/data/ed/'
-FILE_NAME = f'{FILE_PATH}/{METHOD}_episodes_movements_{CANDIDATE_POSITIONS}V_{GATEWAYS}G_{DEVICES}D.dat'
+FILE_NAME = f'{FILE_PATH}/{METHOD}_movements_{CANDIDATE_POSITIONS}V_{GATEWAYS}G_{DEVICES}D_5SS.dat'
 DEVICES_FILE_NAME = f'{DEVICES_PATH}/d_pos_7s+{DEVICES}d.dat'
 STEP_SIZE = 20000 / math.sqrt(CANDIDATE_POSITIONS)
 
@@ -68,7 +68,10 @@ def is_out_of_area(coord, action):
 
 
 # GIF creation function for all episodes with pauses in "OutOfArea" and "Collision"
-def generate_combined_gif(data, devices, output_path):
+def generate_combined_gif(data, devices, output_path, ep_ini, ep_fim):
+    # Filter data to contain only the episodes within the range [ep_ini, ep_fim]
+    data = [d for d in data if ep_ini <= d[0] <= ep_fim]
+
     # Obtaining all unique episodes
     all_episodes = sorted(set(d[0] for d in data))
 
@@ -159,7 +162,9 @@ def generate_combined_gif(data, devices, output_path):
 if __name__ == "__main__":
     data = load_file(FILE_NAME)
     devices = load_devices(DEVICES_FILE_NAME)
-    GIF_NAME = f'{GIF_PATH}/{METHOD}_Movements_{CANDIDATE_POSITIONS}V_{GATEWAYS}G_{DEVICES}D.gif'
-    print("Generating combined GIF for all episodes with pauses on 'OutOfArea' and 'Collision'...")
-    generate_combined_gif(data, devices, GIF_NAME)
+    GIF_NAME = f'{GIF_PATH}/{METHOD}_movements_{CANDIDATE_POSITIONS}V_{GATEWAYS}G_{DEVICES}D.gif'
+    ep_ini = 21  # Replace with desired start episode
+    ep_fim = 80  # Replace with desired end episode
+    print(f"Generating combined GIF for episodes {ep_ini} to {ep_fim} with pauses on 'OutOfArea' and 'Collision'...")
+    generate_combined_gif(data, devices, GIF_NAME, ep_ini, ep_fim)
     print(f"Combined GIF generated at: {GIF_NAME}")

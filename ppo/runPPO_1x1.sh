@@ -5,12 +5,11 @@ SZ=20000 # Tamanho fixo
 
 # Função para exibir o uso correto do script
 usage() {
- echo "Uso: $0 -n <n> -d <DV> -g <GW> -i <EPI> -f <EPF> -s <ST> [-v]"
+ echo "Uso: $0 -n <n> -d <DV> -g <GW> -e <EP> -s <ST> -r <SD> [-v]"
  echo "  -n <n>    Valor para 'n' (ex: 8)"
  echo "  -d <DV>   Valor para 'DV' (ex: 50)"
  echo "  -g <GW>   Valor para 'GW' (ex: 6)"
- echo "  -i <EP>   Valor para 'EP' (ex: 100)"
- echo "  -f <EP>   Valor para 'EP' (ex: 100)"
+ echo "  -e <EP>   Valor para 'EP' (ex: 100)"
  echo "  -s <ST>   Valor para 'ST' (ex: 100)"
  echo "  -v        Habilita modo VERBOSE (opcional)"
  exit 1
@@ -20,21 +19,21 @@ usage() {
 VERBOSE=0
 
 # Processa os argumentos de entrada
-while getopts ":n:d:g:i:f:s:v" opt; do
+while getopts ":n:d:g:e:s:r:v" opt; do
  case $opt in
    n) VP=${OPTARG} ;;     # Valor para n
    d) DV=${OPTARG} ;;    # Valor para DV
    g) GW=${OPTARG} ;;    # Valor para GW
-   i) EPI=${OPTARG} ;;    # Valor para EPInicial
-   f) EPF=${OPTARG} ;;    # Valor para EPFinal
+   e) EP=${OPTARG} ;;    # Valor para EP
    s) ST=${OPTARG} ;;    # Valor para ST
+   r) SD=${OPTARG} ;;    # Valor para SD
    v) VERBOSE=1 ;;       # Ativa o modo VERBOSE
    *) usage ;;           # Exibe uso correto se algo inválido for passado
  esac
 done
 
 # Verifica se todos os parâmetros obrigatórios foram fornecidos
-if [ -z "$VP" ] || [ -z "$DV" ] || [ -z "$GW" ] || [ -z "$EPI" ] || [ -z "$EPF" ] || [ -z "$ST" ]; then
+if [ -z "$VP" ] || [ -z "$DV" ] || [ -z "$GW" ] || [ -z "$EP" ] || [ -z "$SD" ] || [ -z "$ST" ]; then
  usage
 fi
 
@@ -48,12 +47,11 @@ log_verbose() {
  fi
 }
 
-# Executa o agente DQN
-log_verbose "Executando: python3 DQN_Ns3Simulation.py --v  $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --ep $EP --st $ST --ss 1 --so 1"
-python3 DQN_ns3Simulation.py --v $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --epi $EPI --epf $EPF --st $ST --ss 1 --so 1
+# Loop para executar com seed de 1 a 20
+log_verbose "Executando com SEED=$SEED: python3 PPO_ns3Simulation.py --v $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --ep $EP --st $ST --sd $SD --so 1 --ss 1"
+python3 PPO_ns3Simulation.py --v $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --ep $EP --st $ST --sd $SD --so 1 --ss 1
 
-# Gera os gráficos usando os mesmos parâmetros
-log_verbose "Gerando gráfico: python3 DQN_grafs.py --v $VP_SQUARE --g $GW --d $DV"
-python3 DQN_grafs.py --v $VP_SQUARE --g $GW --d $DV
+log_verbose "Gerando gráfico para SEED=$SEED: python3 A2C_grafs.py --v $VP_SQUARE --g $GW --d $DV --s $SD"
+python3 PPO_grafs.py --v $VP_SQUARE --g $GW --d $DV --s $SD
 
 echo "Execução concluída."
