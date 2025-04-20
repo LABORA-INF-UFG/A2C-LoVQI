@@ -2,13 +2,10 @@ import argparse
 import itertools
 import os
 import time
-
 import numpy as np
-import pandas as pd
-import torch
 from numpy import random
-
-from DQN_mapping import DQNMapping, load_checkpoint, save_checkpoint, save_simulation_results
+from DQN_mapping import DQNMapping
+from RL_Checkpoints import *
 from ns3gym import ns3env
 
 device = torch.device("cpu")
@@ -36,6 +33,7 @@ parser.add_argument('--st', type=int, help='Number of steps')
 parser.add_argument('--ss', type=int, help='Start NS-3 Simulation')
 parser.add_argument('--so', type=int, help='Start Optimal')
 parser.add_argument('--out', type=int, help='Plot the results')
+parser.add_argument('--sd', type=int, help='Seed')
 parser.add_argument('--out_term', type=int, help='Output type [file or screen] for results plotting')
 parser.add_argument('--progress', type=int, help='Show progress bar')
 args = parser.parse_args()
@@ -58,7 +56,7 @@ steps_per_episode = args.st  # Passos por episódio
 virtual_positions = dim_grid * dim_grid
 step_size = area_side / dim_grid  # Tamanho do passo
 print_movements = True
-sim_seed = random.randint(1, 20)  # Semente de simulação
+sim_seed = args.sd  # Semente de simulação
 initial_episode = args.epi
 final_episode = args.epf
 # run_seed = final_episode-initial_episode
@@ -125,25 +123,61 @@ if os.path.exists(checkpoint_filename):
 # Lista para registrar os dados de cada episódio
 results = [[], [], [], []]
 improvements = []
-# Loop principal de aprendizado
-done = False
+
+if os.path.exists(results_file_name):
+    with open(results_file_name, 'r') as file:
+        for line in file.readlines()[1:]:  # Skip the header
+            try:
+                episodio, tempo, reward, qualified_reward, loss = map(float, line.strip().split(','))
+                results[0].append(tempo)
+                results[1].append(reward)
+                results[2].append(qualified_reward)
+                results[3].append(loss)
+                if len(results[1]) > 0:
+                    improvements.append(1 if results[2][-1] < qualified_reward else 0)
+                else:
+                    improvements.append(0)
+                # print(
+                #     f"Processed: Episodio: {episodio}, Tempo: {tempo}, Reward: {reward}, Qualified Reward: {qualified_reward}, Loss: {loss}")
+            except ValueError as e:
+                print(f"Error processing line: {line}, Error: {e}")
 # map de episodes_movements
 episodes_movements = {}
-episode_times = []
+if os.path.exists(movements_file_name):
+    with open(movements_file_name, 'r') as file:
+        for line in file.readlines()[1:]:  # Skip the header
+            try:
+                episode, step, state, next_state, reward, info, action, step_size = line.strip().split(",")
+                reward = float(reward)  # Ensure the reward is stored as a numeric value
+                if episode not in episodes_movements:
+                    episodes_movements[episode] = []
+                episodes_movements[episode].append(
+                    (int(step), state, next_state, reward, info, action, float(step_size)))
+            except:
+                print(f"Error processing line: {line}")
+if os.path.exists(best_positions_file_name):
+    with open(best_positions_file_name, 'r') as file:
+        for line in file.readlines()[1:]:
+            try:
+
+                # episode, step, reward, positions, info
+                best_episode, best_step, best_reward, best_positions, best_info = line.strip().split(",")
+                best_reward = float(best_reward)
+            except:
+                print(f"Error processing line: {line}")
+else:
+    best_reward = -np.inf
+
+# Loop principal de aprendizado
+done = False
 
 k = 0
 qualified_mean_reward = 0
 
-# Se foi interrompido, carrega o último episódio executado
-# if os.path.exists(results_file_name):
-#     data = pd.read_csv(results_file_name)
-#     initial_episode = data['episodio'].max() + 1
-#     final_episode = episodes + initial_episode
-# else:
-# Primeira execução
-allowed_checkpoint = int(0.2 * final_episode - initial_episode + 1)
+allowed_checkpoint = int(0.2 * final_episode)
 allowed_checkpoint = 10 if allowed_checkpoint < 10 else allowed_checkpoint
-best_reward = -np.inf
+out_of_area = 0
+accumulated_out_of_area_penalty = 0
 
 for episode in range(initial_episode, final_episode + 1):
     start_time = time.time()  # Início da medição do tempo
@@ -151,7 +185,7 @@ for episode in range(initial_episode, final_episode + 1):
 
     agent.reset_epsilon()  # Reinicia o epsilon, se necessário
     if done:  # Colision in last episode - Reset()
-        sim_seed = random.randint(1, 20)
+        # sim_seed = random.randint(1, 20)
         ns3_env.reset(sim_seed)
     else:
         state, reward, _, _ = ns3_env.get_state()
@@ -166,6 +200,22 @@ for episode in range(initial_episode, final_episode + 1):
         iAction = action_space.index(action)
         # Aplica a ação no ambiente e obtém o próximo estado, recompensa, informações e se o episódio acabou
         next_state, reward, done, info = ns3_env.step(iAction)
+
+        # Tentativa de evitar múltiplas saídas de área simultâneas
+        if reward == -1:  # Em caso de saída da área aumenta a penalidade proporcionalmente
+            out_of_area += 1
+            accumulated_out_of_area_penalty = out_of_area * 0.2
+        else:
+            out_of_area = 0
+            accumulated_out_of_area_penalty = 0
+        reward -= accumulated_out_of_area_penalty
+
+        # Registra as recompensas qualificadas
+        if info and "OutOfArea" not in info and "Collision" not in info:
+            reward += 0.15
+            step_q_rewards.append(reward)
+            q_reward = reward
+
         # Armazena essa transição na memória de replay
         agent.remember(state, action, reward, next_state, done)
         step_rewards.append(reward)
@@ -175,8 +225,7 @@ for episode in range(initial_episode, final_episode + 1):
             best_step = step
             best_episode = episode
             best_info = info
-        if info and "Collision" not in info and "OutOfArea" not in info:
-            step_q_rewards.append(reward)
+
         loss = agent.get_loss(next_state, reward, action)
         step_losses.append(loss)
 
@@ -186,7 +235,8 @@ for episode in range(initial_episode, final_episode + 1):
             str_next_state = str(next_state).replace("[ ", "[").replace("\n", "").replace("\t", "").replace("    ",
                                                                                                             ";").replace(
                 "   ", ";").replace("  ", ";").replace(" ", ";")
-            episode_movements.append((step, str_state, str_next_state, reward, info, action, step_size))
+            str_action = str(action).replace(', ',';').replace('; ',';')
+            episode_movements.append((step, str_state, str_next_state, reward, info, str_action, step_size))
 
         state = next_state  # Move para o próximo estado
         if verbose:

@@ -66,7 +66,7 @@ for gp in gps:
     axs[1].set_ylabel("Loss Acumulada")
     
     # if log:
-    axs[1].set_yscale('log')
+    # axs[1].set_yscale('log')
         # axs[1].set_ylim(bottom=40000, top=-60000)
     axs[1].legend()
     axs[1].grid()

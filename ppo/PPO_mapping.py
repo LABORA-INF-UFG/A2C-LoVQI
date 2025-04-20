@@ -8,8 +8,8 @@ import torch.nn.init as init
 class PPOMapping:
     def __init__(self, ns3_env, state_size, action_space,
                  n_vants, dim_grid, gamma=0.99, lambdaa=0.95,
-                 clip_epsilon=0.2, learning_rate=3e-4, entropy_coef=0.01,
-                 batch_size=5000, memory_limit=100000, epochs=20,
+                 clip_epsilon=0.2, actor_learning_rate=3e-4, critic_learning_rate=2e-4,
+                 entropy_coef=0.01, batch_size=5000, memory_limit=100000, epochs=20,
                  epsilon=1.0, epsilon_decay=0.995, epsilon_min=0.01,
                  weight_decay = 1e-5 ,device='cpu'):
         self.device = torch.device(device)
@@ -21,7 +21,8 @@ class PPOMapping:
         self.gamma = gamma
         self.lambdaa = lambdaa
         self.clip_epsilon = clip_epsilon
-        self.learning_rate = learning_rate
+        self.actor_learning_rate = actor_learning_rate
+        self.critic_learning_rate = critic_learning_rate
         self.batch_size = batch_size
         self.memory_limit=memory_limit
         self.epochs = epochs
@@ -38,12 +39,12 @@ class PPOMapping:
         # Otimizadores com regularização L2
         self.policy_optimizer = optim.Adam(
             self.policy_network.parameters(),
-            lr=self.learning_rate,
+            lr=self.actor_learning_rate,
             weight_decay=self.weigth_decay  # Regularização L2
         )
         self.value_optimizer = optim.Adam(
             self.value_network.parameters(),
-            lr=self.learning_rate,
+            lr=self.critic_learning_rate,
             weight_decay=self.weigth_decay  # Regularização L2
         )
 

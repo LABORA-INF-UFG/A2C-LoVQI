@@ -155,6 +155,7 @@ if os.path.exists(checkpoint_filename):
 
 best_reward = -np.inf
 out_of_area = 0
+accumulated_out_of_area_penalty = 0
 
 for episode in range(initial_episode, final_episode + 1):
     step = 0
@@ -194,12 +195,11 @@ for episode in range(initial_episode, final_episode + 1):
         except Exception as e:
             print(f"Erro ao executar ns3_env.step com iAction={i_action} e action:{action}: {e}")
             raise
-
         # Tentativa de evitar múltiplas saídas de área simultâneas
         # Em caso de saída da área aumenta a penalidade proporcionalmente
         accumulated_out_of_area_penalty = accumulated_out_of_area_penalty + 0.3 if reward == -1 else 0.0
         reward -= accumulated_out_of_area_penalty
-
+        q_reward = 0
         # Registra as recompensas qualificadas
         if info and "OutOfArea" not in info and "Collision" not in info:
             reward += 0.5
@@ -259,12 +259,13 @@ for episode in range(initial_episode, final_episode + 1):
         # critic_optimizer.zero_grad()
         critic_loss.backward()
         critic_optimizer.step()
+
+        step += 1
         state = next_state
         # Em caso de colisão termina o episódio ou se o total de penalizações
         # por saídas de área extrapolar a penalização da colisão
         if done:
             break
-        step += 1
 
 
     # Ajustar a taxa de exploração X explotação

@@ -169,52 +169,6 @@ class DQNMapping:
         loss.backward()
         self.optimizer.step()
 
-    # def replay_experience-o(self):
-    #     """Treina a rede neural usando minibatches do buffer de replay."""
-    #     # Verifica se o buffer tem elementos suficientes
-    #     if len(self.replay_buffer) < self.batch_size:
-    #         # Usa o buffer se for menor que o batch size
-    #         batch = list(self.replay_buffer)
-    #     else:
-    #         batch = random.sample(self.replay_buffer, self.batch_size)
-    #
-    #     # Processa os estados, ações, recompensas e próximos estados
-    #     states, targets = [], []
-    #     for state, action, reward, next_state, done in batch:
-    #         # Garante que os estados tenham o formato correto
-    #         state = np.array(state).flatten()
-    #         next_state = np.array(next_state).flatten()
-    #
-    #         state_tensor = torch.FloatTensor(state).unsqueeze(0)
-    #         next_state_tensor = torch.FloatTensor(next_state).unsqueeze(0)
-    #         state_tensor = state_tensor.to(self.device)
-    #         next_state_tensor = next_state_tensor.to(self.device)
-    #         q_values = self.policy_network(state_tensor).detach().cpu().numpy()[0]
-    #         q_next = self.target_network(next_state_tensor).detach().cpu().numpy()[0]
-    #
-    #         # Atualiza o valor de Q para a ação tomada
-    #         target = np.copy(q_values)
-    #         action_index = self.action_space.index(action)  # Obtém o índice da ação
-    #         if done:
-    #             target[action_index] = reward
-    #         else:
-    #             target[action_index] = reward + self.gamma * np.max(q_next)
-    #
-    #         states.append(state)
-    #         targets.append(target)
-    #
-    #     # Converte listas em tensores para treinamento
-    #     states_tensor = torch.FloatTensor(np.array(states)).to(self.device)
-    #     targets_tensor = torch.FloatTensor(np.array(targets)).to(self.device)
-    #
-    #     # Treinamento da política atual
-    #     self.optimizer.zero_grad()
-    #     predictions = self.policy_network(states_tensor)
-    #     loss = self.criterion(predictions, targets_tensor)
-    #     loss.backward()
-    #     self.optimizer.step()
-    #     return loss.item()
-
     def reset_epsilon(self):
         """Redefine o epsilon para o valor máximo."""
         self.epsilon = self.epsilon_max
@@ -270,14 +224,5 @@ class ReplayBuffer:
             self.priorities[idx] = error ** self.alpha
 
 
-def save_checkpoint(policy_model, target_model, optimizer, filename):
-    """Salva o estado atual do modelo e otimizadores."""
-    checkpoint = {
-        'policy_state_dict': policy_model.state_dict(),
-        'target_state_dict': target_model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict(),
-    }
-    torch.save(checkpoint, filename)
-    print(f"Checkpoint salvo em {filename}")
 
 

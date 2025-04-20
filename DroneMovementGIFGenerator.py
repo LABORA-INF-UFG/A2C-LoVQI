@@ -6,9 +6,8 @@ import os
 from matplotlib.animation import FuncAnimation
 
 # Parâmetros gerais (substitua conforme necessário)
-AREA_LIMIT = (100, 100)  # Limites da área (x, y)
+AREA_LIMIT = (144, 144)  # Limites da área (x, y)
 STEP_SIZE = 1  # Tamanho do passo entre frames
-
 
 # Funções auxiliares
 

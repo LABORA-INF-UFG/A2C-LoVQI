@@ -223,10 +223,9 @@ for episode in range(initial_episode, final_episode + 1):
 
         # Em caso de colisão termina o episódio ou se o total de penalizações
         # por saídas de área extrapolar a penalização da colisão
-        step += 1
-        if done or "Collision" in info or accumulated_out_of_area_penalty > 3:
+        if done or accumulated_out_of_area_penalty < -2.50:
             break
-
+        step += 1
 
     # em caso de colisão ou excesso de saídas de área salta para o próximo episódio
     if "Collision" in info or accumulated_out_of_area_penalty < -2.50:

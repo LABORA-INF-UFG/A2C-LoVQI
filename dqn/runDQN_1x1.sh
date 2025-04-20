@@ -52,8 +52,4 @@ log_verbose() {
 log_verbose "Executando: python3 DQN_Ns3Simulation.py --v  $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --ep $EP --st $ST --ss 1 --so 1"
 python3 DQN_ns3Simulation.py --v $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --epi $EPI --epf $EPF --st $ST --ss 1 --so 1
 
-# Gera os gráficos usando os mesmos parâmetros
-log_verbose "Gerando gráfico: python3 DQN_grafs.py --v $VP_SQUARE --g $GW --d $DV"
-python3 DQN_grafs.py --v $VP_SQUARE --g $GW --d $DV
-
 echo "Execução concluída."

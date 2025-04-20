@@ -32,8 +32,8 @@ for gp in gps:
     all_seeds_data = []
 
     # Iterar pelos valores de seed de 1 a 10
-    for seed in range(1, 6):
-        input_file = os.path.join(input_dir, f'PPO_results_{vp}V_{gp}G_{dp}D_{seed}S.dat')
+    for seed in range(6, 20):
+        input_file = os.path.join(input_dir, f'ppo/PPO_results_{vp}V_{gp}G_{dp}D_{seed}S.dat')
 
         if not os.path.exists(input_file):
             print(f"Arquivo não encontrado: {input_file}")
@@ -74,36 +74,36 @@ for gp in gps:
 
     # Plot 1: Tempo de execução (média)
     axs[0].plot(mean_data["episodio"], mean_data["tempo"], linestyle='-', label=f'{gp} Gateways', color=color)
-    axs[0].set_title(f"Tempo de Execução por Episódio {'(Escala Log)' if log else ''}")
+    axs[0].set_title(f"Tempo de Execução por Episódio")
     axs[0].set_xlabel("Episódio")
     axs[0].set_ylabel("Tempo de Execução")
     if log:
         axs[0].set_yscale('log')
     axs[0].legend()
-    axs[0].grid()
+    axs[0].grid(color='gray', linestyle='-', linewidth=0.5, alpha=0.7)
 
     # Plot 2: Loss acumulada (com mesmo esquema de cores)
     axs[1].plot(mean_data["episodio"], mean_data["actor_loss"], linestyle='--', label=f'Actor Loss ({gp} Gateways)',
                 color=color)
     axs[1].plot(mean_data["episodio"], mean_data["critic_loss"], linestyle='-', label=f'Critic Loss ({gp} Gateways)',
                 color=color)
-    axs[1].set_title(f"Loss Acumulada por Episódio {'(Escala Log)' if log else ''}")
+    axs[1].set_title(f"Loss Acumulada por Episódio")
     axs[1].set_xlabel("Episódio")
     axs[1].set_ylabel("Loss Acumulada")
     if log:
         axs[1].set_yscale('log')  # Aplicar escala log no eixo Y
     axs[1].legend()
-    axs[1].grid()
+    axs[1].grid(color='gray', linestyle='-', linewidth=0.5, alpha=0.7)
 
     # Plot 3: Recompensa acumulada (média)
     axs[2].plot(mean_data["episodio"], mean_data["q_reward"], linestyle='-', label=f'{gp} Gateways', color=color)
-    axs[2].set_title(f"Recompensa Acumulada por Episódio {'(Escala Log)' if log else ''}")
+    axs[2].set_title(f"Recompensa Acumulada por Episódio")
     axs[2].set_xlabel("Episódio")
     axs[2].set_ylabel("Recompensa Acumulada")
     # if log:
-        # axs[2].set_yscale('log')
+    #     axs[2].set_yscale('log')
     axs[2].legend()
-    axs[2].grid()
+    axs[2].grid(color='gray', linestyle='-', linewidth=0.5, alpha=0.7)
 
 # Ajusta o layout para evitar sobreposição
 if data_found:

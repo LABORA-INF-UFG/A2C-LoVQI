@@ -9,10 +9,7 @@ from numpy import random
 from ns3gym import ns3env
 
 from DDQN_Dueling import DuelingDDQNAgent
-# import load_checkpoint, save_checkpoint, save_simulation_results from ../RL_Checkpoints.py
 from RL_Checkpoints import load_checkpoint, save_checkpoint, save_simulation_results
-
-
 
 device = torch.device("cpu")
 if torch.cuda.is_available():
@@ -140,7 +137,8 @@ qualified_mean_reward = 0
 allowed_checkpoint = int(0.2 * final_episode - initial_episode + 1)
 allowed_checkpoint = 10 if allowed_checkpoint < 10 else allowed_checkpoint
 best_reward = -np.inf
-
+out_of_area = 0
+accumulated_out_of_area_penalty = 0
 for episode in range(initial_episode, final_episode + 1):
     start_time = time.time()  # Início da medição do tempo
     episode_movements = []
@@ -161,6 +159,22 @@ for episode in range(initial_episode, final_episode + 1):
         iAction = action_space.index(action)
         # Aplica a ação no ambiente e obtém o próximo estado, recompensa, informações e se o episódio acabou
         next_state, reward, done, info = ns3_env.step(iAction)
+
+        # Tentativa de evitar múltiplas saídas de área simultâneas
+        if reward == -1:  # Em caso de saída da área aumenta a penalidade proporcionalmente
+            out_of_area += 1
+            accumulated_out_of_area_penalty = out_of_area * 0.2
+        else:
+            out_of_area = 0
+            accumulated_out_of_area_penalty = 0
+        reward -= accumulated_out_of_area_penalty
+
+        # Registra as recompensas qualificadas
+        if info and "OutOfArea" not in info and "Collision" not in info:
+            reward += 0.15
+            step_q_rewards.append(reward)
+            q_reward = reward
+
         # Armazena essa transição na memória de replay
         agent.remember(state, action, reward, next_state, done)
         loss = agent.replay_experience()

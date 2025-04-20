@@ -46,12 +46,10 @@ log_verbose() {
 trap "echo 'Interrupção detectada! Encerrando...' ; kill $(jobs -p) ; exit" SIGINT SIGTERM
 
 # Loop para executar com seed de 1 a 10
-for SEED in $(seq 1 6); do
+for SEED in $(seq 1 10); do
 #  for GW in $(seq 2 5); do
   log_verbose "Executando SEED=$SEED e GW=$GW..."
-  python3 PPO_ns3Simulation.py --v $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV \
-    --gw $GW --ep $EP --st $ST --ss 1 --so 1 --sd $SEED --out 0
-
+  python3 PPO_ns3Simulation.py --v $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --ep $EP --st $ST --ss 1 --so 1 --sd $SEED --out 0
   if [ $(jobs -r | wc -l) -ge 4 ]; then
     wait -n
   fi

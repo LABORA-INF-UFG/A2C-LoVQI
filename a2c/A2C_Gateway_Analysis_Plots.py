@@ -16,6 +16,9 @@ gps = args.g  # Lista de gateways
 dp = args.d
 log = args.l
 
+legend_size = 14
+tick_size = 14
+
 # Caminhos para os diretórios de entrada e saída
 input_dir = "/home/rogerio/git/ns-allinone-3.42/ns-3.42/scratch/ql-uav-deployment/data/ml/new_tr/"
 output_dir = "/home/rogerio/git/IoT-J2024/plots/img/"
@@ -32,7 +35,7 @@ for gp in gps:
     all_seeds_data = []
 
     # Iterar pelos valores de seed de 1 a 10
-    for seed in range(1, 6):
+    for seed in range(1, 5):
         input_file = os.path.join(input_dir, f'A2C_results_{vp}V_{gp}G_{dp}D_{seed}SS.dat')
 
         if not os.path.exists(input_file):
@@ -74,42 +77,43 @@ for gp in gps:
 
     # Plot 1: Tempo de execução (média)
     axs[0].plot(mean_data["episodio"], mean_data["tempo"], linestyle='-', label=f'{gp} Gateways', color=color)
-    axs[0].set_title(f"Tempo de Execução por Episódio {'(Escala Log)' if log else ''}")
-    axs[0].set_xlabel("Episódio")
-    axs[0].set_ylabel("Tempo de Execução")
+    axs[0].set_title(f"Tempo de Execução por Episódio", fontsize=legend_size)
+    axs[0].set_xlabel("Episódio", fontsize=legend_size)
+    axs[0].set_ylabel("Tempo de Execução", fontsize=legend_size)
     if log:
         axs[0].set_yscale('log')
-    axs[0].legend()
+    axs[0].legend(fontsize=legend_size)
+    axs[0].tick_params(axis='both', which='major', labelsize=tick_size)
     axs[0].grid()
 
     # Plot 2: Loss acumulada (com mesmo esquema de cores)
     axs[1].plot(mean_data["episodio"], mean_data["actor_loss"], linestyle='--', label=f'Actor Loss ({gp} Gateways)',
                 color=color)
-    axs[1].plot(mean_data["episodio"], mean_data["critic_loss"], linestyle='-', label=f'Critic Loss ({gp} Gateways)',
-                color=color)
-    axs[1].set_title(f"Loss Acumulada por Episódio {'(Escala Log)' if log else ''}")
-    axs[1].set_xlabel("Episódio")
-    axs[1].set_ylabel("Loss Acumulada")
-    if log:
-        axs[1].set_yscale('log')  # Aplicar escala log no eixo Y
-    axs[1].legend()
+    # axs[1].plot(mean_data["episodio"], mean_data["critic_loss"], linestyle='-', label=f'Critic Loss ({gp} Gateways)',
+    #             color=color)
+    axs[1].set_title(f"Perdas Acumuladas por Episódio", fontsize=legend_size)
+    axs[1].set_xlabel("Episódio", fontsize=legend_size)
+    axs[1].set_ylabel("Perda Acumulada", fontsize=legend_size)
+    # if log:
+    # axs[1].set_yscale('log')  # Aplicar escala log no eixo Y
+    axs[1].legend(fontsize=legend_size-2, loc='center right',  ncol=1, bbox_to_anchor=(0.5, 0.125, 0.5, 0.5))
+    axs[1].tick_params(axis='both', which='major', labelsize=tick_size)
     axs[1].grid()
 
     # Plot 3: Recompensa acumulada (média)
     axs[2].plot(mean_data["episodio"], mean_data["q_reward"], linestyle='-', label=f'{gp} Gateways', color=color)
-    axs[2].set_title(f"Recompensa Acumulada por Episódio {'(Escala Log)' if log else ''}")
-    axs[2].set_xlabel("Episódio")
-    axs[2].set_ylabel("Recompensa Acumulada")
-    if log:
-        axs[2].set_yscale('log')
-    axs[2].legend()
+    axs[2].set_title(f"Recompensas Acumuladas por Episódio", fontsize=legend_size)
+    axs[2].set_xlabel("Episódio", fontsize=legend_size)
+    axs[2].set_ylabel("Recompensa Acumulada", fontsize=legend_size)
+    axs[2].tick_params(axis='both', which='major', labelsize=tick_size)
+    axs[2].legend(fontsize=legend_size)
     axs[2].grid()
 
 # Ajusta o layout para evitar sobreposição
 if data_found:
-    plt.suptitle(
-        f"Resultados do A2C para {vp} Posições Candidatas, {' '.join(map(str, gps))} Gateways e {dp} Dispositivos",
-        fontsize=16)
+    # plt.suptitle(
+        # f"Resultados do A2C para {vp} Posições Candidatas, {' '.join(map(str, gps))} Gateways e {dp} Dispositivos",
+        # fontsize=16)
     plt.tight_layout()
 
     # Nome do arquivo de saída

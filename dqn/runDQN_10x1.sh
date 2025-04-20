@@ -48,8 +48,15 @@ log_verbose() {
  fi
 }
 
-# Executa o agente DQN
-log_verbose "Executando: python3 DDQN_Ns3Simulation.py --v  $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --ep $EP --st $ST --ss 1 --so 1"
-python3 DDQN_ns3Simulation.py --v $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --epi $EPI --epf $EPF --st $ST --ss 1 --so 1
+trap "echo 'Interrupção detectada! Encerrando...' ; kill $(jobs -p) ; exit" SIGINT SIGTERM
 
+# Executa o agente DQN
+for SEED in $(seq 1 1); do
+  log_verbose "Executando: python3 DQN_Ns3Simulation.py --v  $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --ep $EP --st $ST --ss 1 --so 1"
+  python3 DQN_ns3Simulation.py --v $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --epi $EPI --epf $EPF --st $ST --ss 1 --so 1 --sd $SEED
+  if [ $(jobs -r | wc -l) -ge 4 ]; then
+    wait -n
+  fi
+#  done
+done
 echo "Execução concluída."

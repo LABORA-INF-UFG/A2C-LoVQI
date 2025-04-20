@@ -47,11 +47,7 @@ log_verbose() {
  fi
 }
 
-# Loop para executar com seed de 1 a 20
 log_verbose "Executando com SEED=$SEED: python3 PPO_ns3Simulation.py --v $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --ep $EP --st $ST --sd $SD --so 1 --ss 1"
 python3 PPO_ns3Simulation.py --v $VERBOSE --pr 0 --gr $VP --sz $SZ --dv $DV --gw $GW --ep $EP --st $ST --sd $SD --so 1 --ss 1
-
-log_verbose "Gerando gráfico para SEED=$SEED: python3 A2C_grafs.py --v $VP_SQUARE --g $GW --d $DV --s $SD"
-python3 PPO_grafs.py --v $VP_SQUARE --g $GW --d $DV --s $SD
 
 echo "Execução concluída."

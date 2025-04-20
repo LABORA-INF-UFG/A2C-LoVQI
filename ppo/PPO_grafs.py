@@ -28,7 +28,7 @@ output_file = os.path.join(output_dir, f"graf_PPO_results_{vp}V_{gp}G_{dp}D.png"
 data = pd.read_csv(input_file)
 
 # Criação de uma figura com 3 subgráficos lado a lado
-fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+fig, axs = plt.subplots(1, 3, figsize=(21, 5))
 
 # 1. Tempo de execução por episódio
 axs[0].plot(data["episodio"], data["tempo"], linestyle='-', color='b', label='Tempo de Execução')
@@ -40,14 +40,24 @@ axs[0].set_yscale("log")
 axs[0].grid()
 
 # 2. Loss acumulada por episódio
-axs[1].plot(data["episodio"], data["policy_loss"], linestyle='-', color='r', label='Policy Loss Acumulada')
 axs[1].plot(data["episodio"], data["value_loss"], linestyle='--', color='r', label='Value Loss Acumulada')
-axs[1].set_title("Loss Acumulada por Episódio")
+axs[1].plot(data["episodio"], data["policy_loss"], linestyle='-', color='r', label='Policy Loss Acumulada')
+axs[1].set_title("Policy Loss Acumulada por Episódio")
 axs[1].set_xlabel("Episódio")
 axs[1].set_ylabel("Loss Acumulada")
 axs[1].set_yscale("log")
 axs[1].legend()
 axs[1].grid()
+
+# 2. Loss acumulada por episódio
+# axs[2].plot(data["episodio"], data["value_loss"], linestyle='--', color='r', label='Value Loss Acumulada')
+# axs[2].set_title("Value Loss Acumulada por Episódio")
+# axs[2].set_xlabel("Episódio")
+# axs[2].set_ylabel("Loss Acumulada")
+# # axs[2].set_yscale("log")
+# axs[2].legend()
+# axs[2].grid()
+
 # 3. Recompensa acumulada por episódio
 axs[2].plot(data["episodio"], data["q_reward"], linestyle='-', color='g', label='Recompensa Acumulada')
 axs[2].set_title("Recompensa Acumulada por Episódio")

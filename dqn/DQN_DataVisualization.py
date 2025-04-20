@@ -18,8 +18,8 @@ input_dir = "/home/rogerio/git/ns-allinone-3.42/ns-3.42/scratch/ql-uav-deploymen
 output_dir = "/home/rogerio/git/IoT-J2024/plots/img/"
 
 # Nome da figura de saída
-input_file = os.path.join(input_dir, f'DQN_results_{vp}V_{gp}G_{dp}D.dat')  # Nome do arquivo de entrada
-output_file = os.path.join(output_dir, f"graf_DQN_results_{vp}V_{gp}G_{dp}D.png")
+input_file = os.path.join(input_dir, f'DQN_results_{vp}V_{gp}G_{dp}DD.dat')  # Nome do arquivo de entrada
+output_file = os.path.join(output_dir, f"graf_DQN_results_{vp}V_{gp}G_{dp}DD.png")
 
 # Lê o arquivo .dat usando pandas
 # O arquivo possui o seguinte cabeçalho: "episodio,tempo_execucao,sum_loss,avg_loss,sum_reward,avg_reward"
@@ -68,7 +68,7 @@ axs[2].grid()
 
 # Ajusta o layout para evitar sobreposição
 plt.tight_layout()
-
+plt.show()
 # Salva o gráfico como imagem
 fig.savefig(output_file)
 print(f"Gráfico salvo em: {output_file}")

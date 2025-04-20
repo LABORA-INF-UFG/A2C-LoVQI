@@ -23,6 +23,11 @@ output_dir = "/home/rogerio/git/IoT-J2024/plots/img/"
 # Criação de uma figura com 3 subgráficos lado a lado
 fig, axs = plt.subplots(1, 3, figsize=(19, 5))
 
+# Configurações dos tamanhos dos textos dos gráficos
+title_size = 18
+label_size = 16
+tick_size = 16
+
 # Variáveis para rastrear se dados foram encontrados
 data_found = False
 
@@ -45,9 +50,10 @@ for gp in gps:
 
     # Plot 1: Tempo de execução
     axs[0].plot(data["episodio"], data["tempo"], linestyle='-', label=f'{gp} Gateways')
-    axs[0].set_title(f"Tempo de Execução por Episódio {'(Escala Log)' if log else ''}")
-    axs[0].set_xlabel("Episódio")
-    axs[0].set_ylabel("Tempo de Execução")
+    axs[0].set_title(f"Tempo de Execução por Episódio", fontsize=title_size)
+    axs[0].set_xlabel("Episódio", fontsize=label_size)
+    axs[0].set_ylabel("Tempo de Execução", fontsize=label_size)
+    axs[0].tick_params(axis='both', labelsize=tick_size)
     if log:
         axs[0].set_yscale('log')
     axs[0].legend()
@@ -55,9 +61,10 @@ for gp in gps:
 
     # Plot 2: Loss acumulada
     axs[1].plot(data["episodio"], data["loss"], linestyle='-', label=f'{gp} Gateways')
-    axs[1].set_title(f"Loss Acumulada por Episódio {'(Escala Log)' if log else ''}")
-    axs[1].set_xlabel("Episódio")
-    axs[1].set_ylabel("Loss Acumulada")
+    axs[1].set_title(f"Perda Acumulada por Episódio ", fontsize=title_size)
+    axs[1].set_xlabel("Episódio", fontsize=label_size)
+    axs[1].set_ylabel("Perda Acumulada", fontsize=label_size)
+    axs[1].tick_params(axis='both', labelsize=tick_size)
     if log:
         axs[1].set_yscale('log')
     axs[1].legend()
@@ -65,9 +72,10 @@ for gp in gps:
 
     # Plot 3: Recompensa acumulada
     axs[2].plot(data["episodio"], data["qualified_reward"], linestyle='-', label=f'{gp} Gateways')
-    axs[2].set_title(f"Recompensa Acumulada por Episódio {'(Escala Log)' if log else ''}")
-    axs[2].set_xlabel("Episódio")
-    axs[2].set_ylabel("Recompensa Acumulada")
+    axs[2].set_title(f"Recompensa Acumulada por Episódio", fontsize=title_size)
+    axs[2].set_xlabel("Episódio", fontsize=label_size)
+    axs[2].set_ylabel("Recompensa Acumulada", fontsize=label_size)
+    axs[2].tick_params(axis='both', labelsize=tick_size)
     if log:
         axs[2].set_yscale('log')
     axs[2].legend()
@@ -75,8 +83,6 @@ for gp in gps:
 
 # Ajusta o layout para evitar sobreposição
 if data_found:
-    plt.suptitle(f"Resultados do DQN para {vp} Virtual Positions, {' '.join(map(str, gps))} Gateways e {dp} Devices",
-                 fontsize=16)
     plt.tight_layout()
 
     # Nome do arquivo de saída

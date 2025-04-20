@@ -16,12 +16,12 @@ dp = args.d
 log = args.l
 
 # Caminhos para o arquivo de entrada e saída
-input_dir = "/home/rogerio/git/ns-allinone-3.42/ns-3.42/scratch/ql-uav-deployment/data/ml/treinamento/"
+input_dir = "/home/rogerio/git/ns-allinone-3.42/ns-3.42/scratch/ql-uav-deployment/data/ml/treinamento"
 output_dir = "/home/rogerio/git/IoT-J2024/plots/img/"
 
 # Nome da figura de saída
-input_file = os.path.join(input_dir, f'DQN_results_{vp}V_{gp}G_{dp}D.dat')  # Nome do arquivo de entrada
-output_file = os.path.join(output_dir, f"graf_DQN_results_{vp}V_{gp}G_{dp}D.png")
+input_file = os.path.join(input_dir, f'DQN_results_{vp}V_{gp}G_{dp}DD.dat')  # Nome do arquivo de entrada
+output_file = os.path.join(output_dir, f"graf_DQN_results_{vp}V_{gp}G_{dp}DD.png")
 
 # Lê o arquivo .dat usando pandas
 # O arquivo possui o seguinte cabeçalho: "episodio, tempo_execucao, sum_loss, avg_loss, sum_reward, avg_reward"
@@ -37,11 +37,11 @@ data = data.drop_duplicates(subset=['episodio'], keep='first')
 # data = data[(data['episodio'] >= 200) & (data['episodio'] <= 400)]
 
 # Criação de uma figura com 3 subgráficos lado a lado
-fig, axs = plt.subplots(1, 4, figsize=(19, 5))
+fig, axs = plt.subplots(1, 3, figsize=(21, 5))
 
 # 1. Tempo de execução por episódio (escala log no eixo Y)
 axs[0].plot(data["episodio"], data["tempo"], linestyle='-', color='b', label='Tempo de Execução')
-axs[0].set_title(f"Tempo de Execução por Episódio {"(Escala Log)" if log else ""}")
+axs[0].set_title(f"Tempo de Execução por Episódio")
 axs[0].set_xlabel("Episódio")
 axs[0].set_ylabel("Tempo de Execução")
 if log:
@@ -51,33 +51,23 @@ axs[0].grid()
 
 # 2. Loss acumulada por episódio (escala log no eixo Y)
 axs[1].plot(data["episodio"], data["loss"], linestyle='-', color='r', label='Loss Acumulada')
-axs[1].set_title(f"Loss Acumulada por Episódio {"(Escala Log)" if log else ""}")
+axs[1].set_title(f"Perda Acumulada por Episódio")
 axs[1].set_xlabel("Episódio")
-axs[1].set_ylabel("Loss Acumulada")
+axs[1].set_ylabel("Perda Acumulada")
 if log:
     axs[1].set_yscale('log')  # Escala logarítmica no eixo Y
 axs[1].legend()
 axs[1].grid()
 
-# 3. Recompensa acumulada por episódio (escala log no eixo Y)
-axs[2].plot(data["episodio"], data["reward"], linestyle='-', color='g', label='Recompensa Acumulada')
-axs[2].set_title(f"Recompensa Acumulada por Episódio {"(Escala Log)" if log else ""}")
+# 3. Recompensa qualificada acumulada por episódio (escala log no eixo Y)
+axs[2].plot(data["episodio"], data["qualified_reward"], linestyle='-', color='g', label='Recompensa Q-Acumulada')
+axs[2].set_title(f"Recompensa Acumulada por Episódio")
 axs[2].set_xlabel("Episódio")
 axs[2].set_ylabel("Recompensa Acumulada")
 if log:
     axs[2].set_yscale('log')  # Escala logarítmica no eixo Y
 axs[2].legend()
 axs[2].grid()
-
-# 3. Recompensa qualificade acumulada por episódio (escala log no eixo Y)
-axs[3].plot(data["episodio"], data["qualified_reward"], linestyle='-', color='g', label='Recompensa Q-Acumulada')
-axs[3].set_title(f"Recompensa Q-Acumulada por Episódio {"(Escala Log)" if log else ""}")
-axs[3].set_xlabel("Episódio")
-axs[3].set_ylabel("Recompensa Q-Acumulada")
-if log:
-    axs[3].set_yscale('log')  # Escala logarítmica no eixo Y
-axs[3].legend()
-axs[3].grid()
 
 # Ajusta o layout para evitar sobreposição
 plt.tight_layout()
